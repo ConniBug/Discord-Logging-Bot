@@ -1,0 +1,22 @@
+{
+  "name": "discord-logging-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ConniTheKiwi/Discord-Logging-Bot.git"
+  },
+  "author": "Conni!~#0920",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ConniTheKiwi/Discord-Logging-Bot/issues"
+  },
+  "homepage": "https://github.com/ConniTheKiwi/Discord-Logging-Bot#readme",
+  "dependencies": {
+    "discord.js": "^12.5.1"
+  }
+}
