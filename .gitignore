@@ -103,3 +103,5 @@ dist
 # TernJS port file
 .tern-port
 config.json
+00_empty.mp3
+01 Just Right.flac

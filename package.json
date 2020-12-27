@@ -17,6 +17,11 @@
   },
   "homepage": "https://github.com/ConniTheKiwi/Discord-Logging-Bot#readme",
   "dependencies": {
-    "discord.js": "^12.5.1"
+    "@discordjs/opus": "^0.3.3",
+    "discord.js": "^12.5.1",
+    "ffmpeg": "0.0.4",
+    "moment": "^2.29.1",
+    "node-lame": "^1.2.2",
+    "path": "^0.12.7"
   }
 }
