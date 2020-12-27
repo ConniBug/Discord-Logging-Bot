@@ -50,6 +50,51 @@ var last100Events = [["null", "null"]];
 var http = require('http');
 var http = require('http');
 const url = require('url');
+const { Console } = require('console');
+
+function filter(array, eventType, guildID, time, userID) {
+    var indexs = [];
+        
+    var val = 0;
+    array.forEach(value => {
+        indexs.push([val]);
+        val++;
+    });
+
+    if(guildID) {
+        var tmpIndexs = indexs;
+        indexs = [];
+        tmpIndexs.forEach(index => {
+            if(array[index][1].includes(`] - [${guildID}] - [`)) {
+                indexs.push([index]);
+            }
+        });
+    }
+
+    if(eventType) {
+        var tmpIndexs = indexs;
+        indexs = [];
+        tmpIndexs.forEach(index => {
+            if(array[index][1].includes(`[${eventType}] - [`)) {
+                indexs.push([index]);
+            }
+        });
+    }
+
+    if(userID) {
+        var tmpIndexs = indexs;
+        indexs = [];
+        tmpIndexs.forEach(index => {
+           if(array[index][1].includes(` - <-> (${userID}`)){
+               indexs.push([index]);
+
+           } 
+        });
+    }
+
+    return [array, indexs];
+
+}
 
 //create a server object:
 http.createServer(function (req, res) {
@@ -63,20 +108,13 @@ http.createServer(function (req, res) {
     }
 
     if(pathname === "/api/0/getEvents") {
-        if(query.serverID) {
-            console.log(query.serverID);
-            last100Events.forEach(event => {
-                
-                if(event[1].includes(`] - [${query.serverID}] - [`)) {
-                    content += "<br>" + event[1];
-                }
-                else {
-                    console.log("--------");
-                    console.log(event[1]);
-                    console.log("Does not include");
-                }
-            })
-        }
+        var returns = filter(last100Events, query.eventType, query.serverID, query.time, query.userID);
+        last100Events = returns[0];
+        var indexs    = returns[1];
+
+        indexs.forEach(index => {
+            content += "<br>" + last100Events[index];
+        });
     }
     if(pathname === "/api/0/getAllEvents") {
         var i = last100Events.length - 10;
@@ -121,7 +159,7 @@ http.createServer(function (req, res) {
       </script>
       `); //write a response to the client
     res.end(); //end the response
-}).listen(8080); //the server object listens on port 8080 
+}).listen(80); //the server object listens on port 8080 
 /* 
 CONFIG
 
@@ -135,6 +173,10 @@ function log(action, guildID, content) {
     var built = `[${action}] - [${guildID}] - [${Date.now()}] - ${content}`;
     console.log(built);
     last100Events.push([guildID, built]);
+}
+
+function formMessageMeta(message) {
+    return `<-> (${message.author.id}) - ${message.author.tag} - > ${message.guild.name} - > #${message.channel.name} - > ${message.content}`;
 }
 
 var booted = false;
@@ -290,9 +332,10 @@ client.on("guildUnavailable", function(guild){
 client.on("guildUpdate", function(oldGuild, newGuild){
     console.error(`a guild is updated`);
 });
+
 client.on("message", async function(message){
     if(message.author.bot) return;
-    log("message", message.guild.id, `${message.author.tag} - > ${message.guild.name} - > #${message.channel.name} - > ${message.content}`);
+    log("message", message.guild.id, formMessageMeta(message));
 
     if(message.content === "r") {
 
