@@ -54,24 +54,72 @@ const url = require('url');
 //create a server object:
 http.createServer(function (req, res) {
     const queryObject = url.parse(req.url,true);
-    console.log("w");
     var pathname = queryObject.pathname;
     var query    = queryObject.query;
 
-    var content = "<meta http-equiv='refresh' content='1'>";
+    var content = "<meta http-equiv='refresh' content='6'>";
     if(pathname === "/dash") {
         
     }
 
-    if(pathname === "/api/0/getUser") {
-        console.log(last100Events.length);
-        for(var i = last100Events.length - 10; i <= last100Events.length; i++) {
-            content += "<br>" + last100Events[1];
+    if(pathname === "/api/0/getEvents") {
+        if(query.serverID) {
+            console.log(query.serverID);
+            last100Events.forEach(event => {
+                
+                if(event[1].includes(`] - [${query.serverID}] - [`)) {
+                    content += "<br>" + event[1];
+                }
+                else {
+                    console.log("--------");
+                    console.log(event[1]);
+                    console.log("Does not include");
+                }
+            })
+        }
+    }
+    if(pathname === "/api/0/getAllEvents") {
+        var i = last100Events.length - 10;
+        if(i < 1) i = 1;
+
+        for(var t = i; t <= last100Events.length; t++) {
+            //console.log(last100Events[t]);
+            var str = last100Events[t];
+
+            if(str != undefined) {
+                content += "<br>" + str.toString().split(",")[1];
+
+            }
+            
+            //console.log(last100Events[t]);
+            
+            var str = last100Events[t];
+
+            if(str != undefined) {
+                str = str.toString();
+
+                var username = str.toString().split(",")[1].split(" - > ")[0];
+                var server = str.toString().split(",")[1].split(" - > ")[1];
+                var channel = str.toString().split(",")[1].split(" - > ")[2];
+
+                content += "<br>" + username + server + channel;
+            
+            }
         }
     }
 
     res.writeHead(200, {'Content-Type': 'text/html'});
-    res.write(`${content}`); //write a response to the client
+    res.write(`${content} <script>
+    function httpGet(theUrl)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+        xmlHttp.send( null );
+        return xmlHttp.responseText;
+    }
+        
+      </script>
+      `); //write a response to the client
     res.end(); //end the response
 }).listen(8080); //the server object listens on port 8080 
 /* 
@@ -83,6 +131,11 @@ CONFIG
 
 */
 
+function log(action, guildID, content) {
+    var built = `[${action}] - [${guildID}] - [${Date.now()}] - ${content}`;
+    console.log(built);
+    last100Events.push([guildID, built]);
+}
 
 var booted = false;
 // ready
@@ -95,9 +148,8 @@ client.on("ready", function(){
 
     booted = true;
 
-	console.log(`I am ready! Logged in as ${client.user.tag}!`);    
-    console.log(`Bot has started, with ${client.users.cache.size} users, in ${client.channels.cache.size} channels of ${client.guilds.cache.size} guilds.`);
-
+    log("BOOT", "SYS", `I am ready! Logged in as ${client.user.tag}!`);
+    log("BOOT", "SYS", `Bot has started, with ${client.users.cache.size} users, in ${client.channels.cache.size} channels of ${client.guilds.cache.size} guilds.`);
     const Guilds = client.guilds.cache.map(guild => guild.id);
     console.log(Guilds);
 
@@ -240,11 +292,7 @@ client.on("guildUpdate", function(oldGuild, newGuild){
 });
 client.on("message", async function(message){
     if(message.author.bot) return;
-    var logMessage = `message has been sent in ${message.author.tag} - > ${message.guild.name} - > #${message.channel.name} - > ${message.content}`;
-    console.log(logMessage);
-    console.log(last100Events);
-
-    last100Events.push([message.guild.id, logMessage]);
+    log("message", message.guild.id, `${message.author.tag} - > ${message.guild.name} - > #${message.channel.name} - > ${message.content}`);
 
     if(message.content === "r") {
 
@@ -288,9 +336,7 @@ client.on("messageDelete", function(message){
 	.addField('Content', messageContent, false)
 	.addField('ID', "```" + `User: ${authorID}\nChannel: ${channelID}` + "```", true);
 
-    var logMessage = `message has been deleted in ${guildName} - > ${authorTAG} - > ${message.guild.name} - > #${channelName} - > ${messageContent}`;
-    last100Events.push([guildID, logMessage]);
-    console.log(last100Events);
+    log("messageDeleted", message.guild.id, `${authorTAG} - > ${guildName} - > #${channelName} - > ${messageContent}`);
 
     channel.send(exampleEmbed);
 });
