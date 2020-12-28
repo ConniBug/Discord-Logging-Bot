@@ -306,7 +306,7 @@ client.on("guildMemberAdd", function(guildMember){
 
     var authorTAG = guildMember.tag || "NULL";
     var authorID = guildMember.ID || "NULL";
-    var avatarURL = message.author.avatarURL() || "";
+    var avatarURL = guildMember.user.avatarURL() || "";
     // inside a command, event listener, etc.
     const exampleEmbed = new Discord.MessageEmbed()
 	.setTimestamp()
