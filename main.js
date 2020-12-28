@@ -52,7 +52,7 @@ var http = require('http');
 const url = require('url');
 const { Console } = require('console');
 
-function filter(array, eventType, guildID, time, userID) {
+function filter(array, eventType, guildID, time, userID, order) {
     var indexs = [];
         
     var val = 0;
@@ -87,9 +87,14 @@ function filter(array, eventType, guildID, time, userID) {
         tmpIndexs.forEach(index => {
            if(array[index][1].includes(` - <-> (${userID}`)){
                indexs.push([index]);
-
            } 
         });
+    }
+
+    if(order) {
+        if(order === "oldest") {
+            indexs = indexs.reverse();
+        }
     }
 
     return [array, indexs];
@@ -102,18 +107,25 @@ http.createServer(function (req, res) {
     var pathname = queryObject.pathname;
     var query    = queryObject.query;
 
-    var content = "<meta http-equiv='refresh' content='6'>";
+    var content = "<meta http-equiv='refresh' content='0.5'>";
     if(pathname === "/dash") {
         
     }
 
     if(pathname === "/api/0/getEvents") {
-        var returns = filter(last100Events, query.eventType, query.serverID, query.time, query.userID);
+        var returns = filter(last100Events, query.eventType, query.serverID, query.time, query.userID, query.order);
         last100Events = returns[0];
         var indexs    = returns[1];
 
+        var count = 0;
+
         indexs.forEach(index => {
-            content += "<br>" + last100Events[index];
+            if(query.count) {
+                if(indexs.length - Number(query.count) <= count) {
+                    content += `<br> ${count} -> ` + last100Events[index][1];
+                }
+            }
+            count++;
         });
     }
     if(pathname === "/api/0/getAllEvents") {
@@ -281,13 +293,15 @@ client.on("guildDelete", function(guild){
 client.on("guildMemberAdd", function(guildMember){
     console.log(`a user joins a guild: ${guildMember.tag}`);
 
-    var guildID = message.guild.id;
+    console.log(guildMember);
 
+    var guildID = guildMember.guild.id;
+    
     // GET CONFIG
     var conf = ["",""];
     conf = getConfig(guildID);
     ////////////////////////////////////////////////
-    let channel = message.guild.channels.cache.find(c => c.id == conf[2]);
+    let channel = guildMember.guild.channels.cache.find(c => c.id == conf[2]);
 
 
     var authorTAG = guildMember.tag || "NULL";
@@ -366,6 +380,9 @@ client.on("messageDelete", function(message){
     }
     var guildName = message.guild.name || "NULL";
     var authorTAG = message.author.tag || "NULL";
+    if(authorTAG === "Diary-Bot#6624" || authorTAG === "NULL") {
+        return;
+    }
     var authorID = message.author.id || "NULL";
     var avatarURL = message.author.avatarURL() || "";
     var channelID = message.channel.id || "NULL";
