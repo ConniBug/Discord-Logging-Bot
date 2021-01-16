@@ -177,7 +177,7 @@ CONFIG
 
 1 = deleted Message
 2 = User Joined
-
+3 = messageReactionRemoveAll
 
 */
 
@@ -189,6 +189,11 @@ function log(action, guildID, content) {
 
 function formMessageMeta(message) {
     return `<-> (${message.author.id}) - ${message.author.tag} - > ${message.guild.name} - > #${message.channel.name} - > ${message.content}`;
+}
+
+function formGuildMemberMeta(guildMemeberObj) {
+    return `<-> (${guildMemeberObj.user.id}) - ${guildMemeberObj.user.username}#${guildMemeberObj.user.discriminator} - > ${guildMemeberObj.guild.name} - > #${guildMemeberObj.guild.memberCount} - > IsLarge? ${guildMemeberObj.guild.large}`;
+
 }
 
 var booted = false;
@@ -293,8 +298,6 @@ client.on("guildDelete", function(guild){
 client.on("guildMemberAdd", function(guildMember){
     console.log(`a user joins a guild: ${guildMember.tag}`);
 
-    console.log(guildMember);
-
     var guildID = guildMember.guild.id;
     
     // GET CONFIG
@@ -304,9 +307,12 @@ client.on("guildMemberAdd", function(guildMember){
     let channel = guildMember.guild.channels.cache.find(c => c.id == conf[2]);
 
 
-    var authorTAG = guildMember.tag || "NULL";
-    var authorID = guildMember.ID || "NULL";
-    var avatarURL = guildMember.user.avatarURL() || "";
+    var authorTAG = guildMember.user.username || "NULL";
+    if(authorTAG !== "NULL") {
+        authorTAG = authorTAG + "#" + guildMember.user.discriminator;
+    }
+    var authorID = guildMember.user.id || "NULL";
+    var avatarURL = guildMember.user.avatarURL() || "NULL";
     // inside a command, event listener, etc.
     const exampleEmbed = new Discord.MessageEmbed()
 	.setTimestamp()
@@ -322,6 +328,7 @@ client.on("guildMemberAdd", function(guildMember){
 });
 client.on("guildMemberAvailable", function(member){
     console.log(`member becomes available in a large guild: ${member.tag}`);
+    console.log(member);
 });
 
 client.on("guildMemberRemove", function(member){
@@ -372,7 +379,7 @@ client.on("messageDelete", function(message){
 
 
     let channel = message.guild.channels.cache.find(c => c.id == conf[1]);
-    console.log(conf[1]);
+    //console.log(conf[1]);
 
     var messageContent = message.content || "NULL";
     if(messageContent === "NULL") {
@@ -414,6 +421,8 @@ client.on("messageReactionRemove", function(messageReaction, user){
 });
 client.on("messageReactionRemoveAll", function(message){
     console.error(`all reactions are removed from a message`);
+    log("messageReactionRemoveAll", message.guild.id, formMessageMeta(message));
+
 });
 client.on("messageUpdate", function(oldMessage, newMessage){
     console.log(`a message is updated`);
@@ -423,6 +432,8 @@ client.on("presenceUpdate", function(oldMember, newMember){
 });
 client.on("reconnecting", function(){
     console.log(`client tries to reconnect to the WebSocket`);
+    log("SYS", "SYS", formMessageMeta(message));
+
 });
 client.on("resume", function(replayed){
     console.log(`whenever a WebSocket resumes, ${replayed} replays`);
